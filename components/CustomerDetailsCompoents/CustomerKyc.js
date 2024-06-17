@@ -86,7 +86,7 @@ const CustomerKYC = () => {
                 )}
               </View>
               <View style={styles.infoContainer}>
-                <Text style={styles.cardName}>House Details</Text>
+                <Text style={styles.cardName}>House Survey</Text>
                 {/* <Text style={[
                   styles.kycStatus, 
                   !customerKYCData?.['KYC Status'] || customerKYCData?.['KYC Status'] === 'Inactive' 
@@ -123,7 +123,7 @@ const CustomerKYC = () => {
               />
             </View>
             <View style={styles.infoContainer}>
-              <Text style={styles.cardName}>House Details</Text>
+              <Text style={styles.cardName}>House Survey</Text>
               {/* <Text style={[styles.kycStatus, styles.loadingStatus]}>loading</Text> */}
             </View>
           </View>

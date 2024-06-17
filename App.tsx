@@ -386,7 +386,7 @@
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 // import Geolocation from 'react-native-geolocation-service';
 // import axios from 'axios';
-// import BackgroundFetch from 'react-native-background-fetch';
+
 // const Stack = createStackNavigator();
 
 // const requestLocationPermission = async () => {
@@ -514,7 +514,7 @@
 //           const { latitude, longitude } = position.coords;
 //           const currentEmployee = employees.find(emp => emp.Email === email);
 //           if (currentEmployee) {
-//             //console.log(currentEmployee)
+//             console.log(currentEmployee)
 //             const workStartTime = currentEmployee["Work Start Time"];
 //             const workEndTime = currentEmployee["Work End Time"];
 //             //console.log(workStartTime, workEndTime);
@@ -548,30 +548,6 @@
 //     initializeLocationTracking();
 //   }, [email, employees]);
 
-//   useEffect(() => {
-//     const backgroundFetchTask = async (taskId) => {
-//       console.log("[BackgroundFetch] Task ID:", taskId);
-//       await getLocationAndTransmit();
-//       BackgroundFetch.finish(taskId);
-//     };
-
-//     BackgroundFetch.configure(
-//       {
-//         minimumFetchInterval: 15, // Fetch interval in minutes
-//         stopOnTerminate: false,   // Continue running after app is terminated
-//         startOnBoot: true,        // Start background fetch after device is booted
-//       },
-//       backgroundFetchTask,
-//       (error) => {
-//         console.error("[BackgroundFetch] Configure failed:", error);
-//       }
-//     );
-
-//     return () => {
-//       BackgroundFetch.stop();
-//     };
-//   }, []);
-
 //   if (initialLoading) {
 //     return (
 //       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -595,8 +571,8 @@
 // };
 
 // export default App;
-import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, PermissionsAndroid, Platform, Linking } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, ActivityIndicator, PermissionsAndroid, Platform, Linking, AppState } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './screens/HomeScreen';
@@ -611,29 +587,44 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 import axios from 'axios';
 import BackgroundFetch from 'react-native-background-fetch'; // Import background fetch
+import BackgroundTimer from 'react-native-background-timer';
+import {RESULTS, PERMISSIONS, request } from 'react-native-permissions';
 
 const Stack = createStackNavigator();
 
 const App = () => {
   const dispatch = useDispatch();
-  const email = useSelector(selectEmail);
+  //const email = 'riktam@test.com';
+  const email = useSelector(selectEmail) ;
+  console.log("Email", email);
   const [initialLoading, setInitialLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
+  const locationRef = useRef();
+  const appState = useRef(AppState.currentState);
+  const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  useEffect(() => { // employee Data
+    const fetchData = async (retryCount = 3, delay = 2000) => {
       try {
-        const response = await axios.get('https://799d-183-82-4-110.ngrok-free.app/Employees');
+        const response = await axios.get('https://backendforpnf.vercel.app/Employees', { timeout: 10000 });
+        console.log('EMPLOYEE API', response.data.data?.length);
+        await AsyncStorage.setItem('employeesFromLocalStorage', JSON.stringify(response.data.data));
         setEmployees(response.data.data);
-      } catch (err) {
-        console.log("Error while fetching the employee Data", err);
+      } catch (err:any) {
+        if (retryCount === 0 || err.response?.status === 504) {
+          console.error('Error fetching data:', err);
+        } else {
+          console.warn(`Retrying... (${retryCount} attempts left)`);
+          setTimeout(() => fetchData(retryCount - 1, delay), delay);
+        }
       }
     };
 
     fetchData();
   }, []);
 
-  useEffect(() => {
+
+  useEffect(() => { // Login based navigation
     const checkUserLoggedIn = async () => {
       try {
         const userLoggedIn = await AsyncStorage.getItem('userLoggedIn');
@@ -653,135 +644,324 @@ const App = () => {
     checkUserLoggedIn();
   }, [dispatch]);
 
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'android') {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+  const getNativePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'This app needs access to your location',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          const backgroundGranted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
             {
-              title: 'Location Permission',
-              message: 'This app needs access to your location',
+              title: 'Background Location Permission',
+              message: 'This app needs access to your location in the background',
               buttonNeutral: 'Ask Me Later',
               buttonNegative: 'Cancel',
               buttonPositive: 'OK',
-            },
-          );
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            console.log('Location permission granted');
-          } else {
-            console.log('Location permission denied');
-          }
-          return granted === PermissionsAndroid.RESULTS.GRANTED;
-        } catch (err) {
-          console.warn('Error requesting location permission:', err);
-          return false;
-        }
-      }
-      return true;
-    };
-
-    const transmitLocation = async (latitude, longitude) => {
-      try {
-        const data = {
-          latitude: latitude,
-          longitude: longitude,
-          timestamp: new Date().toISOString(),
-        };
-        const response = await axios.post('https://backendforpnf.vercel.app/gps', data);
-        console.log("response", response.data);
-      } catch (err) {
-        console.log("error will uploading co ordinates to backend", err);
-      }
-    };
-
-    const getLocationAndTransmit = async () => {
-      Geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const currentEmployee = employees.find(emp => emp.Email === email);
-          if (currentEmployee) {
-            const workStartTime = currentEmployee["Work Start Time"];
-            const workEndTime = currentEmployee["Work End Time"];
-            if (isWithinWorkHours(workStartTime, workEndTime)) {
-              transmitLocation(latitude, longitude);
-              console.log(true);
-            } else {
-              console.log(false);
             }
+          );
+
+          if (backgroundGranted === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('Location and background location permissions granted');
+            getLocationAndTransmit();
+          } else {
+            console.log('Background location permission denied');
           }
-        },
-        (error) => {
-          console.error(error);
-        },
-        { enableHighAccuracy: true, maximumAge: 10000 },
-      );
-    };
-
-    const initializeLocationTracking = async () => {
-      const permissionGranted = await requestLocationPermission();
-      if (permissionGranted) {
+        } else {
+          console.log('Location permission denied');
+        }
+      } catch (err) {
+        console.warn('Error requesting location permission:', err);
+      }
+    } else {
+      // Handle iOS permissions
+      const fineLocationGranted = await request(PERMISSIONS.IOS.LOCATION_ALWAYS);
+      if (fineLocationGranted === RESULTS.GRANTED) {
         getLocationAndTransmit();
-        const intervalId = setInterval(getLocationAndTransmit, 10 * 60 * 1000);
-        return () => clearInterval(intervalId);
-      } else {
-        openSettings();
       }
-    };
+    }
+  };
+  const getNativeBackGroundPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'This app needs access to your location',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
 
-    const openSettings = () => {
-      Linking.openSettings();
-    };
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          const backgroundGranted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
+            {
+              title: 'Background Location Permission',
+              message: 'This app needs access to your location in the background',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            }
+          );
 
-    const convertTo24HourFormat = (time) => {
-      let [hours, minutes] = time.slice(0, -2).split(':').map(Number);
-      const period = time.slice(-2);
-      if (period.toLowerCase() === 'pm' && hours !== 12) {
-        hours += 12;
-      } else if (period.toLowerCase() === 'am' && hours === 12) {
-        hours = 0;
+          if (backgroundGranted === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('Location and background location permissions granted');
+            getLocationAndTransmitForBackground();
+          } else {
+            console.log('Background location permission denied');
+          }
+        } else {
+          console.log('Location permission denied');
+        }
+      } catch (err) {
+        console.warn('Error requesting location permission:', err);
       }
-      return { hours, minutes };
-    };
-
-    const isWithinWorkHours = (workStartTime, workEndTime) => {
-      const now = new Date();
-      const { hours: startHour, minutes: startMinutes } = convertTo24HourFormat(workStartTime);
-      const { hours: endHour, minutes: endMinutes } = convertTo24HourFormat(workEndTime);
-      const startTime = new Date(now);
-      const endTime = new Date(now);
-      startTime.setHours(startHour, startMinutes, 0, 0);
-      endTime.setHours(endHour, endMinutes, 0, 0);
-      return now >= startTime && now <= endTime;
-    };
-
-    initializeLocationTracking();
-
-    // Background fetch task
-    const backgroundFetchTask = async (taskId) => {
-      console.log("[BackgroundFetch] Task ID:", taskId);
-      await getLocationAndTransmit(); // Run location fetching and transmitting logic
-      BackgroundFetch.finish(taskId); // Signal completion of task
-    };
-
-    // Configure background fetch
+    } else {
+      // Handle iOS permissions
+      const fineLocationGranted = await request(PERMISSIONS.IOS.LOCATION_ALWAYS);
+      if (fineLocationGranted === RESULTS.GRANTED) {
+        getLocationAndTransmit();
+      }
+    }
+  };
+  const configureBackgroundFetch = async () => {
     BackgroundFetch.configure(
       {
-        minimumFetchInterval: 15, // Fetch interval in minutes
-        stopOnTerminate: false,   // Continue running after app is terminated
-        startOnBoot: true,        // Start background fetch after device is booted
+        minimumFetchInterval: 15, 
+        stopOnTerminate: false,
+        startOnBoot: true,
+        requiredNetworkType: BackgroundFetch.NETWORK_TYPE_ANY,
+        requiresCharging: false,
+        requiresDeviceIdle: false,
+        requiresBatteryNotLow: false,
+        requiresStorageNotLow: false,
+        enableHeadless: true
       },
-      backgroundFetchTask, // Pass background fetch task function
+      async (taskId) => {
+        console.log("Running background Task")
+        await getNativeBackGroundPermission ();
+        BackgroundFetch.finish(taskId);
+      },
       (error) => {
-        console.error("[BackgroundFetch] Configure failed:", error);
+        console.log('[BackgroundFetch] configure error:', error);
       }
     );
 
-    // Clean up background fetch when component unmounts
+    const status = await BackgroundFetch.status();
+    console.log('[BackgroundFetch] status:', status);
+  };
+  
+useEffect(() => {
+    const appStateListener = AppState.addEventListener('change', //can be 'background' or 'active'
+        nextAppState => {
+        if(nextAppState == 'background')
+        {
+           console.log("Backround");
+           configureBackgroundFetch();
+           //backGroundTimer();
+        }
+    },
+    );
     return () => {
-      BackgroundFetch.stop();
+      appStateListener?.remove();
     };
+  }, []);
+
+
+  useEffect(() => { // Location tracking
+    if (employees.length > 0) {
+      getNativePermission();
+      const interval = setInterval(() => {
+        if (!locationRef.current) {
+          getNativePermission();
+        }
+      }, 5 * 60 * 1000);
+      return () => {
+        clearInterval(interval);
+      };
+    }
+    else{
+      console.log("no Employee Data")
+    }
   }, [email, employees]);
+
+  
+  const transmitLocation = async (latitude:any, longitude:any, username:any) => {
+    try {
+      const data = {
+        latitude: latitude,
+        longitude: longitude,
+        timestamp: new Date().toISOString(),
+        username:username
+      };
+      //console.log('Before Calling API: ',data);
+      const response = await axios.post('https://backendforpnf.vercel.app/gps', data);
+      //locationRef.current = null;
+      console.log("response", response.data);
+    } catch (err) {
+      console.log("error will uploading co ordinates to backend", err);
+    }
+  };
+
+
+  const convertTo24HourFormat = (time:any) => {
+    let [hours, minutes] = time.slice(0, -2).split(':').map(Number);
+    const period = time.slice(-2);
+    if (period.toLowerCase() === 'pm' && hours !== 12) {
+        hours += 12;
+    } else if (period.toLowerCase() === 'am' && hours === 12) {
+        hours = 0;
+    }
+    return { hours, minutes };
+};
+
+const isWithinWorkHours = (workStartTime:any, workEndTime:any) => {
+    const now = new Date();
+    const { hours: startHour, minutes: startMinutes } = convertTo24HourFormat(workStartTime);
+    const { hours: endHour, minutes: endMinutes } = convertTo24HourFormat(workEndTime);
+
+    const startTime = new Date(now);
+    const endTime = new Date(now);
+
+    startTime.setHours(startHour, startMinutes, 0, 0);
+    endTime.setHours(endHour, endMinutes, 0, 0);
+
+    // Check if the work hours span midnight
+    const spansMidnight = endTime <= startTime;
+
+    //console.log("Current Time:", now);
+    //console.log("Start Time:", startTime);
+    //console.log("End Time:", endTime);
+    //console.log("Spans Midnight:", spansMidnight);
+
+    if (spansMidnight) {
+        const endTimeNextDay = new Date(endTime);
+        endTimeNextDay.setDate(endTimeNextDay.getDate() + 1);
+        console.log("End Time Next Day:", endTimeNextDay);
+        return now >= startTime || now <= endTimeNextDay;
+    } else {
+        return now >= startTime && now <= endTime;
+    }
+};
+
+  
+
+
+  const getLocationAndTransmit = async () => {
+    //console.log('insided get location');
+    Geolocation.getCurrentPosition(
+      (position) => {
+        //console.log('position', position);
+        const { latitude, longitude } = position.coords;
+        //console.log(email);
+        //console.log(employees);
+        const currentEmployee = employees.find(emp => emp.Email === email);
+        console.log('is current employee', currentEmployee, employees?.length, email);
+        if (currentEmployee) {
+          const username = currentEmployee["Full Name"];
+          const workStartTime = currentEmployee["Work Start Time"];
+          const workEndTime = currentEmployee["Work End Time"];
+          if (isWithinWorkHours(workStartTime, workEndTime)) {
+            console.log('In Work Time');
+            transmitLocation(latitude, longitude,username);
+          } else {
+            console.log('Out of Work Time');
+            return;
+          }
+        }
+      },
+      (error) => {
+        console.error(error);
+      },
+      { enableHighAccuracy: true, forceLocationManager: true, maximumAge: 3000 },
+    );
+  };
+  const getLocationAndTransmitForBackground = () => {
+  Geolocation.getCurrentPosition(
+    async (position) => {
+      try {
+        const { latitude, longitude } = position.coords;
+        const employeeEmail = await AsyncStorage.getItem('userEmailId');
+        
+        AsyncStorage.getItem('employeesFromLocalStorage').then(employeesFromLocal => {
+          console.log("dataFrom Local", employeesFromLocal);
+          const currentEmployee = JSON.parse(employeesFromLocal).find(emp => emp.Email === employeeEmail);
+          console.log('is current employee', currentEmployee, employees?.length, email);
+          if (currentEmployee) {
+            const username = currentEmployee["Full Name"];
+            const workStartTime = currentEmployee["Work Start Time"];
+            const workEndTime = currentEmployee["Work End Time"];
+            if (isWithinWorkHours(workStartTime, workEndTime)) {
+              console.log('In Work Time');
+              transmitLocation(latitude, longitude, username);
+            } else {
+              console.log('Out of Work Time');
+              return;
+            }
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    (error) => {
+      console.error(error);
+    },
+    { enableHighAccuracy: true, forceLocationManager: true, maximumAge: 3000 },
+  );
+};
+  const openSettings = () => {
+    Linking.openSettings();
+  };
+
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'This app needs access to your location',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Location permission granted');
+        } else {
+          console.log('Location permission denied');
+        }
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn('Error requesting location permission:', err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const initializeLocationTracking = async () => {
+    const permissionGranted = await requestLocationPermission();
+    console.log(permissionGranted, 'go get location and tramsiimt');
+    if (permissionGranted) {
+      getLocationAndTransmit();
+    } else {
+      openSettings();
+    }
+  };
 
   if (initialLoading) {
     return (
@@ -805,5 +985,5 @@ const App = () => {
       );
     };
     
-      
+    
 export default App;
