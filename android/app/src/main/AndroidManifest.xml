@@ -25,6 +25,7 @@
         android:name="com.transistorsoft.rnbackgroundfetch.HeadlessJobService"
         android:permission="android.permission.BIND_JOB_SERVICE"
         android:exported="true" />
+
        <receiver 
             android:name="com.transistorsoft.rnbackgroundfetch.HeadlessBroadcastReceiver"
             android:enabled="true"
@@ -45,6 +46,9 @@
         
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
             <category android:name="android.intent.category.LAUNCHER" />
             <action android:name="android.intent.action.BOOT_COMPLETED" />
               <action android:name="android.intent.action.REBOOT" />

@@ -110,6 +110,7 @@ dependencies {
     implementation project(':react-native-vector-icons')
     implementation project(':react-native-background-timer')
     implementation project(':react-native-permissions')
+    implementation ('com.google.android.gms:play-services-location:18.0.0')
     
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
