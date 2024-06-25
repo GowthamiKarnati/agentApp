@@ -25,36 +25,6 @@ const UpdateScreen = () => {
   // Render the appropriate component based on the fieldToUpdate parameter
   const renderUpdateComponent = () => {
     switch (fieldName) {
-    //   case 'dob':
-    //     return <DobUpdate />;
-    //   case 'pan':
-    //     return <PanUpdate />;
-    //   case 'noofchildren':
-    //     return <NoofChildren />;
-    //   case 'montlyemioutflow':
-    //     return <MontlyEmi />;
-    //   case 'housetype':
-    //     return <HouseType martials={false}/>
-    //   case 'noofyearsinbusiness':
-    //     return <NumberofBusiness />
-    //   case 'numberoftrucks':
-    //     return <NoofTrucks />
-    //   case 'city':
-    //     return <CityUpdate house={false} />;
-    //   case 'houseaddress':
-    //     return <CityUpdate house={true} />
-    //   case 'phone':
-    //     return <PhoneUpdate alternate={false}/>;
-    //   case 'altphone':
-    //     return <PhoneUpdate alternate={true}/>;
-    //   case 'marital':
-    //     return <HouseType maritals={true} />;
-    //   case 'trucknumber':
-    //     return <TruckNumber />
-    //   case 'pancard':
-    //     return <PanCardUpdate />
-    //   case 'aadharcard':
-    //     return <AadharCardUpdate />
       case 'houseimage':
         return <HouseImagesUpdate />
       case 'houselocation':

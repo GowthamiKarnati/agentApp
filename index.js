@@ -13,6 +13,7 @@ import { AppRegistry } from 'react-native';
 import { Provider } from 'react-redux';
 import App from './App'; // Adjust the path accordingly
 import store from './redux/store'; 
+// import MyBackgroundTask from './components/MyBackgroundTask';
 const Main = () => (
   <Provider store={store}>
     <App />
@@ -21,3 +22,4 @@ const Main = () => (
 
 // Register the main component
 AppRegistry.registerComponent('AgentApp', () => Main);
+// AppRegistry.registerHeadlessTask('MyBackgroundTask', () => MyBackgroundTask);

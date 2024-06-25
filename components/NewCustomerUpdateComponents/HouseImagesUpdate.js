@@ -312,35 +312,32 @@ import axios from 'axios';
 import { selectCustomerKYCData, setCustomerKYCData } from '../../redux/authSlice';
 import Toast from 'react-native-toast-message';
 import { selectCustomerData } from '../../redux/authSlice';
-
+import { selectNewCustomerData } from '../../redux/authSlice';
+import { setNewCustomerData } from '../../redux/authSlice';
 const HouseImagesUpdate = () => {
     const dispatch = useDispatch();
     const navigation = useNavigation();
-    const customerKYCData = useSelector(selectCustomerKYCData);
+    const customerKYCData = useSelector(selectNewCustomerData);
+    //console.log(customerKYCData);
     const customerData = useSelector(selectCustomerData);
-    const customerPhoneNumber = customerData?.['mobile number'] || 'N/A';
+    const customerPhoneNumber = customerKYCData?.['Mobile number'] || 'N/A';
+    console.log(customerPhoneNumber);
     const customerHouseImagesString = customerKYCData['House Images'] || '';
+    //console.log(customerHouseImagesArray);
     const record_id = customerKYCData.record_id;
+    //console.log(record_id);
     const imageUrl = 'https://www.shutterstock.com/image-vector/home-vector-image-be-used-600nw-255682306.jpg';
     const [houseImages, setHouseImages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState([]);
     const [editOptions, setEditOptions] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const customerHouseImagesArray = customerHouseImagesString ? JSON.parse(customerHouseImagesString) : [];
-    const [uploading, setUploading] = useState(false)
-
-    // const handleGalleryLaunch = async() =>{
-    //     const options = {
-    //         mediaType: 'photo',
-    //         selectionLimit: 5, // Adjust the selection limit as needed
-    //         includeBase64: true,
-    //     };
-    //     const result = await launchImageLibrary(options)
-    //     console.log(result);
-
-    // }
+    const handleBack = () => {
+        navigation.navigate('NewCustomerProfile');
+    };
     const handleGalleryLaunch = async () => {
-        
+        //setLoading(true);
         const options = {
             mediaType: 'photo',
             selectionLimit: 5, // Adjust the selection limit as needed
@@ -360,7 +357,7 @@ const HouseImagesUpdate = () => {
                 const uploadedFiles = [];
                 for (const asset of result.assets) {
                     const base64Data = asset.base64;
-                    console.log('Base64 Data:', base64Data); // Log base64 data for each asset
+                    //console.log('Base64 Data:', base64Data); // Log base64 data for each asset
     
                     const uploadedFile = await uploadBase64ToBackend(base64Data);
                     uploadedFiles.push(uploadedFile);
@@ -373,13 +370,15 @@ const HouseImagesUpdate = () => {
             }
         } catch (error) {
             console.log('Error in handleGalleryLaunch:', error);
-        } 
+        } finally {
+            setLoading(false);
+        }
     };
     
     
 
     const uploadBase64ToBackend = async (base64Data) => {
-        setLoading(true);
+        setLoading(true)
         try {
             const response = await axios.post('https://backendforpnf.vercel.app/fileUpload', { base64Data }, {
                 headers: {
@@ -394,49 +393,59 @@ const HouseImagesUpdate = () => {
         } catch (error) {
             console.log('Error in uploadBase64ToBackend:', error);
         }
-        finally{
+        finally {
             setLoading(false);
         }
+
     };
 
-    const handleUpload = async () => {
-        try {
-            setUploading(true);
+    const handleUpload = async() =>{
+        setUploading(true);
+        try{
             const data = {
                 record_id,
                 files,
             };
-
-            const updateResponse = await axios.post('https://backendforpnf.vercel.app/updatehouseimages', data, {
+            const response = await axios.post('https://backendforpnf.vercel.app/updateloanapplicationhouseimages', data,{
                 headers: {
                     'Content-Type': 'application/json',
                 },
-            });
-
-            console.log('Update response:', updateResponse.data);
+            })
+            console.log('Update response:', response.data);
             Toast.show({
                 type: 'success',
                 position: 'bottom',
-                text1: 'Uploaded successfully',
+                text1: 'Updated Successfully',
                 visibilityTime: 3000,
                 autoHide: true,
                 topOffset: 30,
             });
-            navigation.navigate('CustomerProfile');
+            navigation.navigate('NewCustomerProfile');
             const modifiedMobileNumber = customerPhoneNumber.length > 10 ? customerPhoneNumber.slice(-10) : customerPhoneNumber;
-            const Kresponse = await axios.get(`https://backendforpnf.vercel.app/customerKyc?criteria=sheet_42284627.column_1100.column_87%20LIKE%20%22%25${encodeURIComponent(modifiedMobileNumber)}%22`);
-            const apiData = Kresponse.data.data[0] || {};
-            dispatch(setCustomerKYCData(apiData));
-        } catch (error) {
-            console.log('Error in handleUpload:', error);
-        }finally {
+            console.log("Mo", modifiedMobileNumber)
+            const Kresponse = await axios.get(`https://backendforpnf.vercel.app/loanapplication?criteria=sheet_38562544.column_203%20LIKE%20%22%25${encodeURIComponent(modifiedMobileNumber)}%22`);
+            const records = Kresponse.data.data;
+            console.log(records);
+            const compareDates = (dateStr1, dateStr2) => {
+                const date1 = new Date(dateStr1);
+                const date2 = new Date(dateStr2);
+                return date2 - date1;
+            };
+            records.sort((a, b) => compareDates(a["updated_at"], b["updated_at"]));
+            const latestRecord = records[0];
+            //console.log("Latest Updated Record:", latestRecord);
+            console.log("Last Status Updated At:", latestRecord["updated_at"]);
+            dispatch(setNewCustomerData(latestRecord));
+            
+
+
+        }catch(err){
+            console.log("Error in updating loan application", err)
+        }finally{
             setUploading(false);
         }
-    };
 
-    const handleBack = () => {
-        navigation.navigate('CustomerProfile');
-    };
+    }
 
     const handleshowEditOptions = () => {
         setEditOptions(!editOptions);
@@ -515,6 +524,7 @@ const HouseImagesUpdate = () => {
                                 <Text style={styles.uploadButtonText}>Upload</Text>
                             )}
                         </TouchableOpacity>
+                        
                     </>
                 )}
             </View>
@@ -564,7 +574,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     uploadButton: {
-        backgroundColor: '#12b981',
+        backgroundColor: '#1084fe',
         padding: 10,
         borderRadius: 8,
         marginBottom: 10,
@@ -572,6 +582,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flex: 1,
         justifyContent: 'center',
+        width:'100%'
     },
     uploadButtonText: {
         color: 'white',
@@ -607,6 +618,7 @@ const styles = StyleSheet.create({
         color: 'black',
     },
     uploadButtonsContainer: {
+        //flexDirection: 'row',
         width:'100%'
     },
     noImagesContainer: {

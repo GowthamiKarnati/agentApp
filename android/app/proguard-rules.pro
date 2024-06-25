@@ -18,3 +18,17 @@
 # Geolocation
 -keep class com.geolocation.** { *; }
 
+# Keep location classes
+-keep class com.google.android.gms.location.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.common.api.** { *; }
+
+# Keep location methods
+-keep class android.location.Location { *; }
+-keepclassmembers class android.location.Location { *; }
+
+# Keep the Geolocation module
+-keep class com.facebook.react.modules.location.** { *; }
+-keepclassmembers class com.facebook.react.modules.location.** { *; }
+
+

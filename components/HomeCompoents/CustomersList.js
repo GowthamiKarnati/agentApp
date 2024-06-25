@@ -693,7 +693,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { setCustomerData, selectSearchValue ,selectCustomerData } from '../../redux/authSlice';
 import { setSearchValue } from '../../redux/authSlice';
 
-const MainContent = () => {
+const CustomerList = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const searchValue = useSelector(selectSearchValue);
@@ -717,11 +717,11 @@ const MainContent = () => {
     }
   }, [page]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      dispatch(setSearchValue(''));
-    }, [dispatch])
-  );
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     dispatch(setSearchValue(''));
+  //   }, [dispatch])
+  // );
   
   const fetchData = async (pageNumber) => {
     try {
@@ -752,16 +752,7 @@ const MainContent = () => {
         if (pageNumber === 1) {
           setData(newData);
         } else {
-          setData(prevData => {
-            const combinedData = [...prevData, ...newData];
-            return combinedData.sort((a, b) => {
-              const nameA = a.name ? a.name.toUpperCase() : ''; 
-              const nameB = b.name ? b.name.toUpperCase() : ''; 
-              if (nameA < nameB) return -1;
-              if (nameA > nameB) return 1;
-              return 0;
-            });
-          });
+          setData(prevData => [...prevData, ...newData]);
         }
       }
     } catch (error) {
@@ -838,7 +829,7 @@ const MainContent = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 0,
     marginHorizontal: 10,
   },
   cardContainer: {
@@ -884,4 +875,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MainContent;
+export default CustomerList;

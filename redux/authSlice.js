@@ -14,7 +14,9 @@ const authSlice = createSlice({
     addingtruck: false,
     updatingValue: false,
     loading: false,
-    email:''
+    email:'',
+    newCustomerData: null,
+    newCustomerFeild:'',
     
   },
   reducers: {
@@ -51,10 +53,16 @@ const authSlice = createSlice({
     setEmail: (state, action) => {
       state.email = action.payload;
     },
+    setNewCustomerData: (state, action) =>{
+      state.newCustomerData = action.payload;
+    },
+    setNewCustomerFeilds: (state, action) =>{
+      state.newCustomerFeild = action.payload;
+    }
   },
 });
 
-export const { setMobileNumber, setSearchValue, setCustomerKYCData,setCustomerData,setFieldToUpdate,setApplicationData, setSubmitting,setAddingTruck,setUpdatingValue,setLoading, setEmail} = authSlice.actions;
+export const { setMobileNumber, setSearchValue, setCustomerKYCData,setCustomerData,setFieldToUpdate,setApplicationData, setSubmitting,setAddingTruck,setUpdatingValue,setLoading, setEmail,setNewCustomerData, setNewCustomerFeilds} = authSlice.actions;
 export const selectMobileNumber = (state) => state.auth.mobileNumber;
 export const selectSearchValue = (state) => state.auth.searchValue;
 export const selectCustomerKYCData = (state) => state.auth.customerKYCData; 
@@ -66,4 +74,6 @@ export const selectAddingTruck = (state) => state.auth.addingtruck;
 export const selectUpdatingValue = (state) => state.auth.updatingValue;
 export const selectLoading = (state) => state.auth.loading;
 export const selectEmail = (state) => state.auth.email;
+export const selectNewCustomerData = (state) => state.auth.newCustomerData;
+export const selectnewCustomerFeild = (state) => state.auth.newCustomerFeild
 export default authSlice.reducer;

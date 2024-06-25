@@ -9,20 +9,20 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux'; 
 import { useSelector } from 'react-redux';
 import Toast from 'react-native-toast-message';
-
+import { selectNewCustomerData } from '../../redux/authSlice';
+import { setNewCustomerData } from '../../redux/authSlice';
 const HouseLocationUpdate = () => {
     const dispatch = useDispatch();
     const navigation = useNavigation();
-    const customerKYCData = useSelector(selectCustomerKYCData);
-    const customerData = useSelector(selectCustomerData);
-    const customerPhoneNumber = customerData?.['mobile number'] || 'N/A';
+    const customerKYCData = useSelector(selectNewCustomerData);
+    const customerPhoneNumber = customerKYCData?.['Mobile number'] || 'N/A';
     const record_id = customerKYCData.record_id;
     const [loading, setLoading] = useState(false);
-    const [houseUrl, setHouseUrl] = useState(customerKYCData['gps'] ?? '');
+    const [houseUrl, setHouseUrl] = useState(customerKYCData['House Location URL'] ?? '');
     console.log("gps", houseUrl);
     const [validUrl, setValidUrl] = useState(true);
     const [instructionsVisible, setInstructionsVisible] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    const [uploading, setUploading] =  useState(false);
 
     const handleHouseUrlChange = (text) => {
         setHouseUrl(text);
@@ -39,33 +39,19 @@ const HouseLocationUpdate = () => {
         setInstructionsVisible(!instructionsVisible);
     };
 
-    const handleUpdateChildren = async () => {
-        try {
-            if (!validUrl) {
-                return;
-            }
-            setUploading(true);
-
-            let data = {
+    const handleUpload = async() =>{
+        setUploading(true);
+        try{
+            const data = {
                 record_id,
                 houseUrl,
-                noofchildren: customerKYCData['Number of Children'],
-                marital: customerKYCData['Marital Status'],
-                dob: customerKYCData['Date of Birth'],
-                pan: customerKYCData['PAN Number'],
-                monthlyemioutflow: customerKYCData['Monthly EMI Outflow'],
-                housetype: customerKYCData['House Owned or Rented'],
-                noofyearsinbusiness: customerKYCData['Number of years in business'],
-                nooftrucks: customerKYCData['Number of Trucks'],
-                city: customerKYCData['City'],
-                houseaddress: customerKYCData['House Address'],
-                phone: customerKYCData['Phone Number'],
-                altphone: customerKYCData['Alternate Phone Number'],
-                status: "Updated"
             };
-
-            const response = await axios.post(`https://backendforpnf.vercel.app/updatedob`, data);
-            console.log('Server response:', response.data);
+            const response = await axios.post('https://backendforpnf.vercel.app/updateloanapplicationgps', data,{
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            console.log('Update response:', response.data);
             Toast.show({
                 type: 'success',
                 position: 'bottom',
@@ -74,21 +60,34 @@ const HouseLocationUpdate = () => {
                 autoHide: true,
                 topOffset: 30,
             });
-            navigation.navigate('CustomerProfile');
-
+            navigation.navigate('NewCustomerProfile');
+            //console.log('Update response:', response.data);
             const modifiedMobileNumber = customerPhoneNumber.length > 10 ? customerPhoneNumber.slice(-10) : customerPhoneNumber;
-            const Kresponse = await axios.get(`https://backendforpnf.vercel.app/customerKyc?criteria=sheet_42284627.column_1100.column_87%20LIKE%20%22%25${encodeURIComponent(modifiedMobileNumber)}%22`);
-            const apiData = Kresponse.data.data[0] || {};
-            dispatch(setCustomerKYCData(apiData)); 
-        } catch (err) {
-            console.log("Error in updating:", err);
-        } finally {
+            console.log("Mo", modifiedMobileNumber)
+            const Kresponse = await axios.get(`https://backendforpnf.vercel.app/loanapplication?criteria=sheet_38562544.column_203%20LIKE%20%22%25${encodeURIComponent(modifiedMobileNumber)}%22`);
+            const records = Kresponse.data.data;
+            const compareDates = (dateStr1, dateStr2) => {
+                const date1 = new Date(dateStr1);
+                const date2 = new Date(dateStr2);
+                return date2 - date1;
+            };
+            records.sort((a, b) => compareDates(a["updated_at"], b["updated_at"]));
+            const latestRecord = records[0];
+            //console.log("Latest Updated Record:", latestRecord);
+            console.log("Last Status Updated At:", latestRecord["updated_at"]);
+            dispatch(setNewCustomerData(latestRecord));
+
+        }catch(err){
+            console.log("Error in updating loan application", err)
+        }
+        finally{
             setUploading(false);
         }
-    };
+
+    }
 
     const handleBack = () => {
-        navigation.navigate('CustomerProfile');
+        navigation.navigate('NewCustomerProfile');
     };
 
     return (
@@ -118,8 +117,8 @@ const HouseLocationUpdate = () => {
                         value={houseUrl}
                         onChangeText={handleHouseUrlChange}
                         editable
-                         multiline
-                        numberOfLines={3}
+                        multiline
+                        numberOfLines={4}
                     />
                     {!validUrl && <Text style={styles.errorText}>Invalid URL</Text>}
                     {houseUrl && (
@@ -142,8 +141,7 @@ const HouseLocationUpdate = () => {
                         </Text>
                     </View>
                 )}
-                
-                <TouchableOpacity style={[styles.uploadButton, {backgroundColor:'#1084fe'}]} onPress={handleUpdateChildren}>
+                <TouchableOpacity style={[styles.uploadButton, {backgroundColor:'#1084fe'}]} onPress={handleUpload}>
                     {uploading ? (
                         <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
