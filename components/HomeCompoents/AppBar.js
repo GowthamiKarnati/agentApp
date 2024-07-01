@@ -255,7 +255,7 @@
     const [searchText, setSearchText] = useState('');
     const [index, setIndex] = useState(0);
     const [routes] = useState([
-      { key: 'oldCustomers', title: 'Old Customers' },
+      { key: 'oldCustomers', title: 'Existing Customers' },
       { key: 'newCustomers', title: 'New Customers' },
     ]);
   

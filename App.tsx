@@ -559,6 +559,8 @@ const App = () => {
 
     checkUserLoggedIn();
   }, [dispatch]);
+
+  
 useEffect(() => { // Location tracking
   if (employees.length > 0) {
     getNativePermission();

@@ -175,8 +175,7 @@ const NewCustomerList = () => {
         const filteredData = data.filter(
           (application) =>
             application['Workflow Status'] !== 'canceled' &&
-            (application['Workflow Status'] === 'escalate' || application['Workflow Status'] === 'requested')&&
-            application['Old or New Pratibha Finance Customer'] === 'New'
+            (application['Workflow Status'] === 'escalate' || application['Workflow Status'] === 'requested')
         );
         setApplications(filteredData);
       } catch (error) {
