@@ -767,6 +767,7 @@ const CustomerList = () => {
   const handleCustomer = (item) => {
     dispatch(setCustomerData(item));
     navigation.navigate('Customer');
+    console.log("jhvdyuieduewfu........")
   };
 
   const renderCard = ({ item }) => {

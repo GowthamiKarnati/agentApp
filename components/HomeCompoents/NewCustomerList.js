@@ -190,12 +190,13 @@ const NewCustomerList = () => {
     //dispatch(setNew(true))
     dispatch(setNewCustomerData(item))
     navigation.navigate('NewCustomerProfile')
-    console.log(item);
+    // console.log(item);
+    console.log("clicked...")
 
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.cardContainer} onPress={() => handleCustomer(item)}>
+    <TouchableOpacity style={styles.cardContainer} onPress={handleCustomer.bind(this,item)}>
       <View style={styles.cardContent}>
         <View style={styles.textContainer}>
           <Text style={styles.cardName}>{item['Full Name']}</Text>
@@ -207,9 +208,17 @@ const NewCustomerList = () => {
       </View>
     </TouchableOpacity>
   );
-
+  const handleViewPress = () => {
+    console.log("View is clicked");
+  };
   return (
     <View style={styles.container}>
+       {/* <TouchableOpacity
+        onPress={() => console.log("View is clicked")}
+        style={styles.viewButton}
+      > */}
+        {/* <Text onPress={handleViewPress} style={{marginTop:60, textAlign:'center'}}>View</Text> */}
+      {/* </TouchableOpacity> */}
       {loading && applications.length === 0 ? 
       (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -229,9 +238,9 @@ const NewCustomerList = () => {
 
 const styles = StyleSheet.create({
   container: {
-   
     flex: 1,
-    marginHorizontal:10
+    marginHorizontal:10,
+    //backgroundColor:'red'
   },
   cardContainer: {
     backgroundColor: 'white',
@@ -269,6 +278,15 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginTop: 10,
+  },
+  viewButton: {
+    backgroundColor: 'red',
+    marginTop: 10,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 1,
+    pointerEvents: 'auto',
   },
 });
 

@@ -1,22 +1,10 @@
 import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import React from 'react';
-//import { useNavigation } from '@react-navigation/native';
 const AppBar = () => {
- 
-//   const customerData = useSelector(selectCustomerData);
-  //const navigation = useNavigation();
-
-//   const handleBack = () => {
-//     navigation.navigate('Home');
-//   };
-  
   return (
     <SafeAreaView>
       <View style={styles.container}>
-        {/* <TouchableOpacity onPress={handleBack}>
-          <Icon name="arrow-left" size={23} color="white" />
-        </TouchableOpacity> */}
         <View style={styles.titleContainer}>
           <Text style={styles.appBarTitle}>Login</Text>
         </View>

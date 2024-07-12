@@ -24,6 +24,7 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
 
               //add(new RNPermissionsPackage());
+              add(LocationPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
