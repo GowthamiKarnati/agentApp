@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
         padding: 20,
         elevation: 5,
         width: '100%',
-        marginTop: 20,
+        //marginTop: 20,
     },
     formGroup: {
         marginBottom: 20,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';  // Import useState
+import React from 'react';  // Import useState
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 import AppBar from '../components/CustomerProfileComponents/AppBar';
 import CustomerProfile from '../components/CustomerProfileComponents/CustomerProfile';
@@ -6,10 +6,9 @@ import CustomerProfile from '../components/CustomerProfileComponents/CustomerPro
 const CustomerProfileScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
-      
-       <AppBar />
-       <ScrollView >
-       <CustomerProfile /> 
+      <AppBar />
+      <ScrollView >
+        <CustomerProfile /> 
       </ScrollView>
     </SafeAreaView>
   );

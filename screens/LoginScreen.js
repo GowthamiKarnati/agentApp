@@ -1,8 +1,9 @@
 
-import React, { useEffect, useState } from 'react';  // Import useState
+import React, { useEffect, useState } from 'react';  
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 import AppBar from '../components/LoginComponents/AppBar';
 import LoginForm from '../components/LoginComponents/LoginForm';
+
 const LoginScreen = () => {
   return (
     <SafeAreaView style={styles.container}>

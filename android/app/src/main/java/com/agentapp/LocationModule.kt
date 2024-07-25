@@ -62,4 +62,9 @@ class LocationModule(private val reactContext: ReactApplicationContext) : ReactC
             reactContext.startService(intent)
         }
     }
+    @ReactMethod
+    fun stopLocationService() {
+        val intent = Intent(reactContext, LocationService::class.java)
+        reactContext.stopService(intent)
+    }
 }

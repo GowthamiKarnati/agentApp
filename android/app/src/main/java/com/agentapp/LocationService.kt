@@ -75,7 +75,7 @@ class LocationService : Service() {
                 lastKnownLocation?.let {
                     val latitude = it.latitude
                     val longitude = it.longitude
-                   sendLocationToApi(latitude, longitude)
+                    sendLocationToApi(latitude, longitude)
                     hasSentImmediateLocation = true
                 }
             }

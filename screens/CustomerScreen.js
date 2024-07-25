@@ -4,13 +4,11 @@ import AppBar from '../components/CustomerDetailsCompoents/AppBar';
 import CustomerEmis from '../components/CustomerDetailsCompoents/CustomerEmis';
 import CustomerKyc from '../components/CustomerDetailsCompoents/CustomerKyc';
 import Details from '../components/CustomerDetailsCompoents/Details';
+
 const CustomerScreen = () => {
-  //const route = useRoute();
-  //const { customerData } = route.params || {};
   return (
     <SafeAreaView style={styles.container}>
-      
-      <AppBar   />
+      <AppBar />
       <ScrollView >
         <Details />
         <CustomerKyc />

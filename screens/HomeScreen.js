@@ -1,32 +1,47 @@
-
-import React, { useEffect, useState } from 'react';  // Import useState
-import { SafeAreaView, ScrollView, StyleSheet, View,BackHandler } from 'react-native';
+import React, { useEffect } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, BackHandler } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import AppBar from '../components/HomeCompoents/AppBar';
-import CustomersList from '../components/HomeCompoents/CustomersList';
-import NewCustomerTrigger from '../components/HomeCompoents/NewCustomerList';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const HomeScreen = () => {
+  const navigation = useNavigation();
+  console.log(navigation,"navigation in home screen")
+
   useEffect(() => {
-        const backAction = () => {
-          // Exit the app when the back button is pressed
-          BackHandler.exitApp();
-          return true; // Prevent default behavior
-        };
-    
-        const backHandler = BackHandler.addEventListener(
-          'hardwareBackPress',
-          backAction
-        );
-    
-        return () => backHandler.remove();
-      }, []);
+    const checkUserLoggedIn = async () => {
+      const userLoggedIn = await AsyncStorage.getItem('userLoggedIn');
+      if (userLoggedIn !== 'true') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      }
+    };
+
+    checkUserLoggedIn();
+  }, [navigation]);
+
+  useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp();
+      return true; 
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView stickyHeaderIndices={[0]}>
         <AppBar />
-        {/* <NewCustomerTrigger />
-        <CustomersList /> */}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
