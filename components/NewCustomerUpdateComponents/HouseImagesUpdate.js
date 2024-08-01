@@ -12,8 +12,6 @@ import { selectNewCustomerData } from '../../redux/authSlice';
 import { setNewCustomerData } from '../../redux/authSlice';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Buffer } from 'buffer';
-import { Image as CompressorImage } from 'react-native-compressor';
-import RNFS from 'react-native-fs';
 
 const HouseImagesUpdate = () => {
     const dispatch = useDispatch();
@@ -43,6 +41,8 @@ const HouseImagesUpdate = () => {
             mediaType: 'photo',
             selectionLimit: 5, // Adjust the selection limit as needed
             includeBase64: true,
+            maxWidth: 1080,
+            maxHeight: 1080,
         };
     
         try {
@@ -54,12 +54,7 @@ const HouseImagesUpdate = () => {
                 setLoading(true);
                 const uploadedFiles = [];
                 for (const asset of result.assets) {
-                    const compressedImageUri = await CompressorImage.compress(asset.uri, {
-                        compressionMethod: 'auto',
-                        quality: 0.8, // Adjust the quality as needed (0.0 to 1.0)
-                    });
-                    const base64Data = await RNFS.readFile(compressedImageUri, 'base64');
-                    //console.log(base64Data)
+                    const base64Data = asset.base64;
                     const uploadedFile = await uploadBase64ToBackend(base64Data);
                     uploadedFiles.push(uploadedFile);
                 }
@@ -118,6 +113,9 @@ const HouseImagesUpdate = () => {
                 'Missing Information',
             );
             return; // Exit the function if mobile number is not available
+        }
+        if(files.length === 0){
+            Alert.alert("Please upload the image");
         }
         setUploading(true);
         try{

@@ -9,8 +9,6 @@ import Toast from 'react-native-toast-message';
 import { selectCustomerData } from '../../redux/authSlice';
 import { selectCustomerKYCData, setCustomerKYCData } from '../../redux/authSlice';
 import { Buffer } from 'buffer';
-import { Image as CompressorImage } from 'react-native-compressor';
-import RNFS from 'react-native-fs';
 
 const HouseImagesUpdate = () => {
     const dispatch = useDispatch();
@@ -34,6 +32,8 @@ const HouseImagesUpdate = () => {
             mediaType: 'photo',
             selectionLimit: 5, // Adjust the selection limit as needed
             includeBase64: true,
+            maxWidth: 1080,
+            maxHeight: 1080,
         };
         try {
             const result = await launchImageLibrary(options);
@@ -43,13 +43,14 @@ const HouseImagesUpdate = () => {
                 setLoading(true);
                 const uploadedFiles = [];
                 for (const asset of result.assets) {
-                    console.log(asset.uri)
-                    const compressedImageUri = await CompressorImage.compress(asset.uri, {
-                        compressionMethod: 'auto',
-                        quality: 0.8, // Adjust the quality as needed (0.0 to 1.0)
-                    });
-                    const base64Data = await RNFS.readFile(compressedImageUri, 'base64');
-                    
+                    const {width, height} = asset;
+                    // console.log("pixel", width, height)
+                    // const compressedImageUri = await CompressorImage.compress(asset.uri, {
+                    //     compressionMethod: 'auto',
+                    //     quality: 0.8, // Adjust the quality as needed (0.0 to 1.0)
+                    // });
+                    //const base64Data = await RNFS.readFile(compressedImageUri, 'base64');
+                    const base64Data = asset.base64;
                     const uploadedFile = await uploadBase64ToBackend(base64Data);
                     uploadedFiles.push(uploadedFile);
                 }
